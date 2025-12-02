@@ -1,9 +1,9 @@
-# TODO - Create an agent
 # TODO - Pull the data from a DB like Google Sheets
 # TODO Tool to READ the DB
-# TODO 
 
 from agents import first_draft_agent
+
+
 
 response = first_draft_agent.invoke({
     "role" : "user",
