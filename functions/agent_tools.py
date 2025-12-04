@@ -43,3 +43,20 @@ def read_client_folder(client_name: str):
     # We combine all docs into one big text string for the LLM to read
     full_text = "\n\n".join([f"--- Doc: {d.metadata['title']} ---\n{d.page_content}" for d in docs])
     return full_text
+
+
+@tool
+def list_folder_names(creds_path="credentials.json"):
+    """List just the names of files/folders in a Google Drive folder"""
+    service = _get_drive_service(creds_path)
+    
+    results = service.files().list(
+        q=f"'{ACTIVE_CLIENTS_ROOT_ID}' in parents and trashed = false",
+        fields="files(name)",  # Only get names!
+        pageSize=100
+    ).execute()
+    
+    files = results.get('files', [])
+    
+    # Return just a list of names
+    return [file['name'] for file in files]
