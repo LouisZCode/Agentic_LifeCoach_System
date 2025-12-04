@@ -3,7 +3,7 @@ Here you will find all the agents form create_agent, already with their prompts 
 To edit prompts, check the prompts.yaml document
 """
 
-from functions import search_client_drive
+from functions import read_client_folder
 from langchain.agents import create_agent
 import yaml
 from dotenv import load_dotenv
@@ -23,5 +23,5 @@ first_draft_agent_prompt = prompts["class0_prompt"]
 first_draft_agent = create_agent(
     system_prompt=first_draft_agent_prompt,
     model="google_genai:gemini-2.5-flash",
-    tools=[search_client_drive]
+    tools=[read_client_folder]
 )

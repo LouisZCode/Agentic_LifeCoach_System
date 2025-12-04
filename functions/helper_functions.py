@@ -1,6 +1,11 @@
-import os
+"""
+All the functions that will make it easier to use the other ones, like to
+organize or update databases, or manage data before another function
+is useful or over.
+"""
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import os
 from langchain_core.documents import Document
 
 def _get_drive_service(creds_path):
@@ -10,6 +15,30 @@ def _get_drive_service(creds_path):
         scopes=['https://www.googleapis.com/auth/drive']
     )
     return build('drive', 'v3', credentials=creds)
+
+def get_folder_id_by_name(service, folder_name, parent_id=None):
+    """
+    Searches for a folder with a specific name.
+    If parent_id is given, it only searches INSIDE that folder.
+    """
+    query = f"mimeType = 'application/vnd.google-apps.folder' and name = '{folder_name}' and trashed = false"
+    
+    # If we want to look inside a specific parent (like 'Active')
+    if parent_id:
+        query += f" and '{parent_id}' in parents"
+    
+    results = service.files().list(
+        q=query,
+        fields="files(id, name)",
+        pageSize=1
+    ).execute()
+    
+    files = results.get('files', [])
+    
+    if not files:
+        return None # Folder not found
+        
+    return files[0]['id'] # Return the ID of the first match
 
 def load_drive_folder(folder_id, creds_path, service=None):
     """
