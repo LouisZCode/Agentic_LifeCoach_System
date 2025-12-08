@@ -1,5 +1,10 @@
-# TODO - Pull the data from a DB like Google Sheets
-# TODO Tool to READ the DB
+# TODO - Create an Undefined Agent expert
+# TODO -  Able to make the Agent create a new Client Folder form the Survey
+# TODO - Able to create a Discovery_Prep .txt from the Survey IN the Clients File
+
+# Logic, Maris: Hey! I got a new answer form the Survey, here it is:
+# Outout: I created a new File called [Client_Name], Saved the survey_answer document in it, and created a Discovery Prep from the
+#Template into that Folder. 
 
 from agents import first_draft_agent
 
@@ -8,19 +13,3 @@ response = first_draft_agent.invoke({
     "messages": "Can you summarize in one sentence to me the session with Juanito?"
 })
 
-# Show what happened
-print("\n" + "="*50)
-for msg in response["messages"]:
-    if msg.type == "ai":
-        # Check if it used tools
-        if hasattr(msg, 'tool_calls') and msg.tool_calls:
-            print(f"🔧 Agent used tool: {msg.tool_calls[0]['name']}")
-        # Show the final answer
-        elif hasattr(msg, 'content'):
-            if isinstance(msg.content, str):
-                print(f"\n💬 Answer:\n{msg.content}")
-            elif isinstance(msg.content, list):
-                for block in msg.content:
-                    if block.get('type') == 'text':
-                        print(f"\n💬 Answer:\n{block['text']}")
-print("="*50 + "\n")

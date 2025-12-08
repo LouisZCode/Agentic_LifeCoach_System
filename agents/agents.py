@@ -20,7 +20,19 @@ prompts = load_prompts()
 first_draft_agent_prompt = prompts["class0_prompt"]
 
 
-first_draft_agent = create_agent(
+session_agent = create_agent(
+    system_prompt=first_draft_agent_prompt,
+    model="google_genai:gemini-2.5-flash",
+    tools=[list_folder_names, read_client_folder]
+)
+
+discovery_agent = create_agent(
+    system_prompt=first_draft_agent_prompt,
+    model="google_genai:gemini-2.5-flash",
+    tools=[list_folder_names, read_client_folder]
+)
+
+chat_agent = create_agent(
     system_prompt=first_draft_agent_prompt,
     model="google_genai:gemini-2.5-flash",
     tools=[list_folder_names, read_client_folder]
