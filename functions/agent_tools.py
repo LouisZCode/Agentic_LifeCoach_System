@@ -7,20 +7,28 @@ from config import TEMPLATES_PATH, ACTIVE_CLIENTS_PATH
 from langchain.tools import tool
 from pathlib import Path
 
-# Configuration
-
-
 
 @tool(
     "read_folder",
     parse_docstring=True,
     description="reads the existing folder names with client names"
 )
-def read_folder():
+def read_folder(path : str) -> str:
     """
-    Read the folder as a list of the names on 1 level.
+    Description:
+        Read the folder as a list of the names on 1 level.
+
+    Args: 
+        path (str): this is the path where the folders you are searching for are.
+
+    returns:
+        The exact and correct names of the clients
+
+    raises:
+        Error if the path is empty
+
     """
-    active_path = Path(ACTIVE_CLIENTS_PATH)
+    active_path = Path(path)
     clients = [folder.name for folder in active_path.iterdir() if folder.is_dir()]
 
     return clients
