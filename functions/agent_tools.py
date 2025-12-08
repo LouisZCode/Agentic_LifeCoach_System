@@ -6,6 +6,7 @@ from sqlalchemy.sql.coercions import TruncatedLabelImpl
 from config import TEMPLATES_PATH, ACTIVE_CLIENTS_PATH
 from langchain.tools import tool
 from pathlib import Path
+from docx import Document
 
 
 @tool(
@@ -38,14 +39,30 @@ def read_folder(path : str) -> str:
     parse_docstring=True,
     description="reads the desired Template with desired structure"
 )
-def read_template():
+def read_template(path : str, template_name : str) -> str:
     """
-    Read the folder as a list of the names on 1 level.
-    """
-    active_path = Path(ACTIVE_CLIENTS_PATH)
-    clients = [folder.name for folder in active_path.iterdir() if folder.is_dir()]
+    Description:
+        Reads the desired template structure.
 
-    return clients
+    Args: 
+        path (str): this is the path where the template documents are.
+        template_name (str): the desired template to read.
+
+    returns:
+        The template content to understand the structure inside it
+
+    raises:
+        Error if the template is not readable or does not exist
+
+    """
+    final_path = f"{path}/{template_name}"
+
+    file_path = Path(final_path)
+    doc = Document(file_path)
+
+    text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+
+    return text
 
 @tool
 def create_summary(path: str):

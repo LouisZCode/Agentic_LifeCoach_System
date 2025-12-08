@@ -10,7 +10,7 @@ from agents import session_agent
 
 response = session_agent.invoke({
     "role": "user",
-    "messages": "I need to create a homework for a client, i need to see if he is in the database, tell me what clients we have"
+    "messages": "Can you read the current homework template and tell me what we need to fill it?"
 })
 
 for i, m in enumerate(response["messages"]):
