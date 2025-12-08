@@ -6,10 +6,12 @@
 # Outout: I created a new File called [Client_Name], Saved the survey_answer document in it, and created a Discovery Prep from the
 #Template into that Folder. 
 
-from agents import first_draft_agent
+from agents import session_agent
 
-response = first_draft_agent.invoke({
+response = session_agent.invoke({
     "role": "user",
-    "messages": "Can you summarize in one sentence to me the session with Juanito?"
+    "messages": "I need to create a homework for a client, i need to see if he is in the database, tell me what clients we have"
 })
 
+for i, m in enumerate(response["messages"]):
+    m.pretty_print()
