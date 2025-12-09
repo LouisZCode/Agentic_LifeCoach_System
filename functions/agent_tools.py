@@ -65,11 +65,14 @@ def read_template(path : str, template_name : str) -> str:
     return text
 
 @tool
-def save_summary(path: str):
+def save_summary(path: str, content : str) -> str:
     """
-    Read the folder as a list of the names on 1 level.
+    saves the created summary in the current Session Path.
     """
-    pass
+    file_path = Path(f"{path}/summary.txt")
+    file_path.write_text(content)
+
+    return f"new summary created in {file_path}"
 
 @tool
 def create_homework(path: str):

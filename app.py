@@ -114,10 +114,9 @@ def get_or_create_session_folder(client_name: str, session_date) -> str:
 def strip_context_tags(text: str) -> str:
     """Remove context tags like [Client: X] [Session: Y] from display text"""
     import re
-    # Remove patterns like [Client: ...] [Session: ...] [Session Path: ...] [Uploaded file: ...]
+    # Remove patterns like [Client: ...] [Session: ...] [Uploaded file: ...]
     cleaned = re.sub(r'\[Client:[^\]]*\]\s*', '', text)
     cleaned = re.sub(r'\[Session:[^\]]*\]\s*', '', cleaned)
-    cleaned = re.sub(r'\[Session Path:[^\]]*\]\s*', '', cleaned)
     cleaned = re.sub(r'\[Uploaded file:[^\]]*\]\s*', '', cleaned)
     cleaned = re.sub(r'\[Session transcription:[^\]]*\]\s*', '', cleaned)
     return cleaned.strip()
