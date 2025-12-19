@@ -3,7 +3,7 @@ Here you will find all the agents form create_agent, already with their prompts 
 To edit prompts, check the prompts.yaml document
 """
 
-from functions import read_folder, read_template, save_summary, save_homework, save_session_draft
+from functions import read_folder, read_template, save_summary, save_homework, save_session_draft, verify_document_draft
 from langchain.agents import create_agent
 import yaml
 from dotenv import load_dotenv
@@ -23,7 +23,7 @@ session_agent_prompt = prompts["session_agent_prompt"]
 session_agent = create_agent(
     system_prompt=session_agent_prompt,
     model="anthropic:claude-haiku-4-5",
-    tools=[read_folder, read_template, save_summary, save_session_draft, save_homework],
+    tools=[read_folder, read_template, verify_document_draft, save_summary, save_session_draft, save_homework],
 )
 
 """
