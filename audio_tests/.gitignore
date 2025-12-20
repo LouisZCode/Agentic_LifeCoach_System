@@ -1,0 +1,10 @@
+# Audio samples (don't commit large audio files)
+audio_sample/*.mp3
+audio_sample/*.wav
+audio_sample/*.m4a
+audio_sample/*.flac
+audio_sample/*.ogg
+audio_sample/*.webm
+
+# Keep the results for reference, but optional
+# test_results/*.txt
