@@ -73,7 +73,7 @@ def read_template(path : str, template_name : str) -> str:
     parse_docstring=True,
     description="MUST use before saving any document. Checks if draft meets character limits."
 )
-def verify_document_draft(content: str, document_type: str) -> str:
+def verify_document_draft(content: str, document_type: str, attempt: int = 1) -> str:
     """
     Description:
         Verifies that a document draft meets the character limits before saving.
@@ -82,11 +82,17 @@ def verify_document_draft(content: str, document_type: str) -> str:
     Args:
         content (str): The full document draft to verify
         document_type (str): Type of document - "summary", "homework", or "draft"
+        attempt (int): Current attempt number (1, 2, 3, 4). After attempt 4, save regardless.
 
     Returns:
         Analysis showing character count per section, limits, and PASS/FAIL status.
         If any section fails, you must edit the draft and verify again before saving.
     """
+    # Hard limit: after 4 attempts, force save
+    MAX_ATTEMPTS = 4
+    if attempt >= MAX_ATTEMPTS:
+        log_tool_call("verify_document_draft", {"document_type": document_type, "attempt": attempt}, output="LIMIT REACHED - forcing save", status="limit")
+        return f"=== ATTEMPT LIMIT REACHED ({attempt}/{MAX_ATTEMPTS}) ===\n\nYou have made {attempt} verification attempts. Save the document now to avoid excessive costs.\n\nCall the save tool immediately with your current draft."
     log_tool_call("verify_document_draft", {"document_type": document_type, "content_length": len(content)})
     lines = content.split('\n')
     total_chars = len(content)
@@ -96,7 +102,7 @@ def verify_document_draft(content: str, document_type: str) -> str:
         limits = {
             "total": (2000, 2600),           # sweet spot: 2300, relaxed from 2200-2500
             "title": (10, 40),               # sweet spot: 25
-            "warm_opening": (150, 350),      # sweet spot: 250
+            "warm_opening": (100, 200),      # sweet spot: 150
             "main_takeaways": (600, 1100),   # sweet spot: 850
             "tools": (120, 350),             # sweet spot: 235
             "achievements": (250, 550),      # sweet spot: 400
@@ -187,16 +193,20 @@ def verify_document_draft(content: str, document_type: str) -> str:
             # Build specific edit instructions
             edit_instructions = []
 
+            # Helper: add 10% overshoot to REMOVE instructions so LLM cuts more aggressively
+            def overshoot(chars_to_remove):
+                return int(chars_to_remove * 1.1)
+
             total_min, total_max = limits['total']
             if total_chars < total_min:
                 edit_instructions.append(f"TOTAL: ADD {total_min - total_chars} chars overall")
             elif total_chars > total_max:
-                edit_instructions.append(f"TOTAL: REMOVE {total_chars - total_max} chars overall")
+                edit_instructions.append(f"TOTAL: REMOVE {overshoot(total_chars - total_max)} chars overall")
 
             if warm_len < limits['warm_opening'][0]:
                 edit_instructions.append(f"Warm Opening: ADD {limits['warm_opening'][0] - warm_len} chars")
             elif warm_len > limits['warm_opening'][1]:
-                edit_instructions.append(f"Warm Opening: REMOVE {warm_len - limits['warm_opening'][1]} chars")
+                edit_instructions.append(f"Warm Opening: REMOVE {overshoot(warm_len - limits['warm_opening'][1])} chars")
 
             for section_key in ["main_takeaways", "tools", "achievements", "next_steps"]:
                 section_content = sections.get(section_key, "")
@@ -206,7 +216,7 @@ def verify_document_draft(content: str, document_type: str) -> str:
                 if section_len < min_val:
                     edit_instructions.append(f"{section_name}: ADD {min_val - section_len} chars")
                 elif section_len > max_val:
-                    edit_instructions.append(f"{section_name}: REMOVE {section_len - max_val} chars")
+                    edit_instructions.append(f"{section_name}: REMOVE {overshoot(section_len - max_val)} chars")
 
             # Return draft + edit instructions so LLM can edit in place
             results.append("=== EDIT REQUIRED ===")
