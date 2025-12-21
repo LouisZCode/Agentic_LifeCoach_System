@@ -1,0 +1,160 @@
+=== TRANSCRIPTION TEST RESULTS ===
+Method: Local Parakeet-MLX + Pyannote
+Date: 2025-12-21 11:09:39
+Audio File: audio_example_SHORT
+Audio Duration: 6:29
+
+Cost: $0.00 (fully local - FREE!)
+
+Processing Time:
+  - Parakeet Transcription: 19.7s
+  - Pyannote Diarization: 212.0s
+  - Total: 231.7s
+  - Speed: 1.7x realtime
+
+Speaker Diarization: Yes (Pyannote local)
+
+Advantages:
+  - No file size limits
+  - No audio length limits
+  - No API costs
+  - Works offline
+  - Privacy (audio never leaves machine)
+
+Disadvantages:
+  - Slower than cloud APIs
+  - Requires local GPU/CPU resources
+
+=== TRANSCRIPTION ===
+
+Speaker 00: Hear me.
+
+Speaker 01: Wait, let me just turn on.
+
+UNKNOWN: Yeah.
+
+Speaker 01: Yes, I can hear you.
+
+UNKNOWN: Can you hear me?
+
+Speaker 00: I can't hear you.
+
+UNKNOWN: Can you hear me?
+
+Speaker 01: Yes.
+
+UNKNOWN: Wait.
+
+Speaker 00: Now it's working.
+
+UNKNOWN: Okay.
+
+Speaker 00: Yay, it works for me.
+
+Speaker 01: That's but can you hear me or no?
+
+Speaker 00: Yes.
+
+Speaker 01: Through your headphones.
+
+UNKNOWN: Yes.
+
+Speaker 01: Okay. Okay. Then let's talk about something very important.
+
+Speaker 00: Okay. What's your favorite moment of better call soul series so far?
+
+UNKNOWN: Wow. That is uh very crazy question.
+
+Speaker 01: Um I can why can I just myself?
+
+Speaker 00: Oh, I don't know. That's that's you thing because I can I cannot hear myself.
+
+Speaker 01: Interesting.
+
+UNKNOWN: Okay.
+
+Speaker 01: Um I don't know what what has been my favorite moment. I think when they found that family in the woods, that was pretty funny.
+
+Speaker 00: Ah the yeah, that was funny, true.
+
+UNKNOWN: How about you?
+
+Speaker 00: Um good question. Thing with the Mexicans are in Mexico and it's yellow. That's the best part.
+
+UNKNOWN: Relate. Remember home.
+
+Speaker 01: You really like situations like that.
+
+Speaker 00: The Mexican colorful jellows. It's the best.
+
+Speaker 01: Very very much a classic one. Anytime we got to Mexico.
+
+UNKNOWN: You're always yellow, baby.
+
+Speaker 01: I'm a meaning.
+
+UNKNOWN: That's also okay. Yeah.
+
+Speaker 00: But what does it have to do? Ah, maybe this one is better. Yeah, that's why mine was so shitty.
+
+UNKNOWN: What?
+
+Speaker 00: Because it was listening for from my Mac microphone, not from my like my headphones microphone nowadays, and now it's making a much better job at doing my transcription and here.
+
+Speaker 01: Yes, I was gonna say that my transcription is generally not so good actually.
+
+Speaker 00: To your side, like mine now it's great.
+
+UNKNOWN: Yours also is really good. Uh okay, maybe let's talk a bit more and then I can change your audio microphone and everything.
+
+Speaker 01: I I have both on my speaker, so it should be fine.
+
+Speaker 00: No, use your headset.
+
+Speaker 01: Uh uh when I say speaker I meant headset.
+
+Speaker 00: Ah okay.
+
+Speaker 01: But for example, now instead of writing uh he changed.
+
+Speaker 00: Right say I so it is it is hearing everything in context and then it makes like the final one.
+
+Speaker 01: Okay, but like when you said headset, he wrote cat. Which is also cool, but why didn't he understand that w because he understood me saying headset, but not you I guess it's my accent. But but I mean in the context, he should understand that it's not a cat set.
+
+Speaker 00: Well he doesn't know what we are doing. Maybe it's like yeah, cat set.
+
+UNKNOWN: Totally, totally I think it's good it's good enough, right?
+
+Speaker 00: For what you need for what they are saying.
+
+Speaker 01: Um I mean I have to try because they some of them have really strong accents. Uh so I'm not so sure how good it will try. Like also some of them like shetty. For some reason he speaks very low. Like he's shy, he's a sh he's a shy person. So he just says like three words, and then they're kind of with a weird accent. Not a weird accent, just his accent is very strong.
+
+Speaker 00: Wow.
+
+Speaker 01: So it's because it's hard for me to understand, and I'm a human that kind of understands the context of what we're talking about. No, I don't know how easy it will be for AI, but we can try.
+
+UNKNOWN: Why not?
+
+Speaker 00: You can use both Cluley and this one and and just check how both do it.
+
+Speaker 01: Yeah, I think I will use both.
+
+Speaker 00: Because if Cluley is unlimited for 20, maybe it's much better than this, but this one is like good enough for free, I guess.
+
+Speaker 01: Yeah, yeah. I mean it is translating.
+
+Speaker 00: Uh I would say 95% should be fine.
+
+Speaker 01: Yeah, I think also then ChP can kind of uh understand the context even if the transcription is kind of weird. That's what's gonna say.
+
+Speaker 00: Like I can also just put in the prompt like hey, here is the transcription. This is a transcription, so just be aware that it's not perfect, so please man think that bla bla bla bla.
+
+UNKNOWN: So they should know that's what I was thinking as well to just put it into the prompt and then he can also have a little bit of imagination and figure out what we what we meant.
+
+Speaker 00: Tomorrow you try both, and you we can see both how they work. That it's gonna be better if I have both examples.
+
+Speaker 01: Okay, nice. Then I I can give you both examples and then you can maybe use Claude to just see which one is more accurate.
+
+Speaker 00: Yeah, exactly. Makes sense. Save this one then, baby.
+
+Speaker 01: Okay, besitos. Bye, besitos.

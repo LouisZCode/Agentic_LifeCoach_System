@@ -1,0 +1,148 @@
+=== TRANSCRIPTION TEST RESULTS ===
+Method: Mistral Voxtral + Pyannote
+Date: 2025-12-21 09:10:32
+Audio File: audio_example_SHORT
+Audio Duration: 6:29
+
+Cost Breakdown:
+  - Voxtral: $0.0065 (@ $0.001/min)
+  - Pyannote: $0.00 (local/free)
+  - Total: $0.0065
+
+Processing Time:
+  - Voxtral API: 55.1s
+  - Pyannote Diarization: 211.8s
+  - Total: 266.9s
+  - Speed: 1.5x realtime
+
+Speaker Diarization: Yes (Pyannote local)
+
+=== TRANSCRIPTION ===
+
+Speaker 00: Hear me.
+
+Speaker 01: Wait, let me just turn on.
+
+UNKNOWN: Yeah.
+
+Speaker 01: Yes, I can hear you. Can you hear me?
+
+Speaker 00: I can't hear you. Can you hear me?
+
+Speaker 01: Yes.
+
+Speaker 00: Wait. Now it's working, okay. Yay, it works for me.
+
+Speaker 01: But can you hear me or no?
+
+Speaker 00: Yes.
+
+Speaker 01: Through your headphones?
+
+Speaker 00: Yes.
+
+Speaker 01: Okay, okay. Then let's talk about something very important.
+
+Speaker 00: Okay, what's your favorite moment of Better Call Saul series so far?
+
+Speaker 01: Wow, that is a very crazy question.
+
+UNKNOWN: So much has happened.
+
+Speaker 01: Why can't I hear myself?
+
+Speaker 00: I don't know, that's your thing because I cannot hear myself.
+
+Speaker 01: Interesting, okay. I don't know, what has been my favorite moment? I think when they found that family in the woods, that was pretty funny.
+
+Speaker 00: Ah, yeah, that was funny, true.
+
+Speaker 01: How about you?
+
+Speaker 00: Um... Good question.
+
+Speaker 01: Hmm.
+
+Speaker 00: thing with the mexicans sorry in mexico and it's yellow that's the best part relate remember home
+
+Speaker 01: You relate to situations like that.
+
+Speaker 00: The Mexican colorful yellows. It's the best.
+
+Speaker 01: Very much a classic one. Anytime I go to Mexico, I become a yellow myself.
+
+Speaker 00: You're always yellow, baby.
+
+Speaker 01: I'm a medium.
+
+Speaker 00: That's also.
+
+Speaker 01: That's also. Okay.
+
+Speaker 00: Yeah. But what else you have to do? Maybe this one is better. Yeah, that's why mine was so shitty.
+
+Speaker 01: What?
+
+Speaker 00: Because it was listening from my Mac microphone, not from my headphones microphone. Now it is, and now it's making a much better job of doing my transcription in here.
+
+Speaker 01: Yes, I was gonna say that my transcription is generally not so good, actually.
+
+Speaker 00: To your side? Like, mine now is great, yours also is really good.
+
+Speaker 01: Okay, maybe let's talk a bit more and then I can have a good review.
+
+Speaker 00: Change your audio, microphone and everything.
+
+Speaker 01: I have both on my speaker, so it should be fine.
+
+Speaker 00: No, use your headset.
+
+Speaker 01: When I say speaker, I meant headset.
+
+Speaker 00: Ah, okay.
+
+Speaker 01: But for example, now, instead of writing, ah, he changed.
+
+Speaker 00: Yeah, it's like, yeah, so it is hearing everything in context and then it makes, like, the final one.
+
+Speaker 01: Okay, but, like, when you said headset, he wrote cat set. Which is also cool, but why didn't he understand that? Because he understood me saying headset, but not you.
+
+Speaker 00: Yeah, I guess it's my accent.
+
+Speaker 01: But I mean in the context, he should understand that it's not a cat set.
+
+Speaker 00: Well, he doesn't know what we are... Maybe he's like, yeah, cat set.
+
+Speaker 01: Totally, totally.
+
+Speaker 00: I think it's good enough, right? For what you need for what they are saying?
+
+Speaker 01: I mean, I have to try because some of them have really strong accents. So I'm not so sure how good it will translate. Also, some of them, like Shady... For some reason, he speaks very, very low. Like, he's shy. He's a shy person. So he just says, like, three words, and then they're kind of with a weird accent. Not a weird accent, just his accent is very strong.
+
+Speaker 00: Wow.
+
+Speaker 01: So it's hard for me to understand, and I'm a human that kind of understands the context of what we're talking about, no? I don't know how easy it will be for AI, but we can try. Why not?
+
+Speaker 00: You can use both Cluly and this one and just check how both do it.
+
+Speaker 01: Yeah, I think I will use both.
+
+Speaker 00: Because if Cluly is unlimited for 20, maybe it's much better than this, but this one is, like, good enough for free, I guess.
+
+Speaker 01: Yeah, yeah. I mean, it is translating.
+
+Speaker 00: I would say 95% should be fine.
+
+Speaker 01: Yeah, I think also then Chati can kind of understand the context, even if the transcription is kind of weird.
+
+Speaker 00: I was going to say, like, I can also just... put in the prompt like hey here is the transcription this is a transcription so just be aware that it's not perfect so please maintain that blah blah blah so they should know that's what i was thinking as
+
+Speaker 01: well to just put it into the prompt and then he can also have a little bit of imagination and figure out what we what we meant
+
+Speaker 00: Tomorrow you try both and we can see both how they work. That is going to be better if I have both examples.
+
+Speaker 01: Okay, nice. Then I can give you both examples and then you can maybe use Cloud to just see which one is more accurate.
+
+Speaker 00: Yeah, exactly. Makes sense. Save this one then, baby.
+
+Speaker 01: Okay, besitos. Te amo. Bye, besitos.

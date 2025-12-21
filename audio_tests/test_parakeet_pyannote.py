@@ -1,24 +1,22 @@
 """
-Test script for Mistral Voxtral + Pyannote diarization.
-Voxtral for transcription, Pyannote for speaker identification.
+Test script for local Parakeet-MLX + Pyannote diarization.
+Fully local solution - no API calls, no file size limits.
 
 Usage:
-    1. Add MISTRAL_API_KEY to .env
-    2. Drop an audio file in audio_sample/
-    3. Run: python test_voxtral_pyannote.py
-    4. Check test_results/ for output
+    1. Drop an audio file in audio_sample/
+    2. Run: python test_parakeet_pyannote.py
+    3. Check test_results/ for output
 
 Requirements:
-    - MISTRAL_API_KEY in .env
-    - HUGGINGFACE_TOKEN in .env (for Pyannote)
+    - parakeet-mlx installed
     - pyannote.audio installed
+    - HUGGINGFACE_TOKEN in .env (for Pyannote)
+    - FFmpeg installed (brew install ffmpeg)
 """
 
 import os
 import sys
 import time
-import subprocess
-import requests
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -30,11 +28,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 
-# Pricing (as of Dec 2025)
-VOXTRAL_PRICE_PER_MINUTE = 0.001  # $0.001/min - very cheap!
-
-# Max file size for API upload (in MB)
-MAX_UPLOAD_SIZE_MB = 25
+# Pricing - local models are FREE
+COST_PER_MINUTE = 0.0  # Free!
 
 
 def find_audio_file(folder: Path) -> Path | None:
@@ -45,43 +40,6 @@ def find_audio_file(folder: Path) -> Path | None:
         if file.is_file() and file.suffix.lower() in audio_extensions:
             return file
     return None
-
-
-def convert_to_mp3(audio_path: Path, bitrate: str = "128k") -> Path:
-    """
-    Convert audio file to MP3 for smaller upload size.
-    Returns path to the MP3 file (or original if already MP3).
-    """
-    if audio_path.suffix.lower() == '.mp3':
-        return audio_path
-
-    mp3_path = audio_path.with_suffix('.mp3')
-
-    # Skip if MP3 already exists and is newer than source
-    if mp3_path.exists() and mp3_path.stat().st_mtime > audio_path.stat().st_mtime:
-        print(f"  Using existing MP3: {mp3_path.name}")
-        return mp3_path
-
-    print(f"  Converting {audio_path.suffix} → MP3 for smaller upload...")
-
-    result = subprocess.run(
-        ['ffmpeg', '-y', '-i', str(audio_path), '-b:a', bitrate, str(mp3_path)],
-        capture_output=True, text=True
-    )
-
-    if result.returncode != 0:
-        raise RuntimeError(f"FFmpeg conversion failed: {result.stderr}")
-
-    original_size = audio_path.stat().st_size / (1024 * 1024)
-    new_size = mp3_path.stat().st_size / (1024 * 1024)
-    print(f"  Converted: {original_size:.1f}MB → {new_size:.1f}MB ({100*new_size/original_size:.0f}%)")
-
-    return mp3_path
-
-
-def get_file_size_mb(file_path: Path) -> float:
-    """Get file size in megabytes."""
-    return file_path.stat().st_size / (1024 * 1024)
 
 
 def get_audio_duration(file_path: Path) -> float:
@@ -110,62 +68,40 @@ def format_duration(seconds: float) -> str:
     return f"{minutes}:{secs:02d}"
 
 
-def transcribe_with_voxtral(audio_path: Path) -> dict:
+def get_file_size_mb(file_path: Path) -> float:
+    """Get file size in megabytes."""
+    return file_path.stat().st_size / (1024 * 1024)
+
+
+def transcribe_with_parakeet(audio_path: Path) -> dict:
     """
-    Transcribe audio using Mistral's Voxtral API.
+    Transcribe audio using local Parakeet-MLX model.
 
     Returns dict with:
         - segments: list of {text, start, end}
         - full_text: complete transcription
         - duration: audio duration
     """
-    api_key = os.getenv("MISTRAL_API_KEY")
-    if not api_key:
-        raise RuntimeError("MISTRAL_API_KEY not found in .env")
+    from parakeet_mlx import from_pretrained
 
-    # Mistral audio transcription endpoint
-    url = "https://api.mistral.ai/v1/audio/transcriptions"
+    model = from_pretrained("mlx-community/parakeet-tdt-0.6b-v3")
+    result = model.transcribe(str(audio_path))
 
-    headers = {
-        "Authorization": f"Bearer {api_key}"
-    }
-
-    # Read the audio file
-    with open(audio_path, "rb") as f:
-        files = {
-            "file": (audio_path.name, f, "audio/mpeg")
-        }
-        data = {
-            "model": "voxtral-small-latest",  # 32K context (vs mini's 16K)
-            "timestamp_granularities": "segment",
-            "response_format": "verbose_json"
-        }
-
-        print("  Sending to Voxtral API...")
-        response = requests.post(url, headers=headers, files=files, data=data)
-
-    if response.status_code != 200:
-        raise RuntimeError(f"Voxtral API error: {response.status_code} - {response.text}")
-
-    result = response.json()
-
-    # Parse response
+    # Extract segments with timestamps
     segments = []
-    if "segments" in result:
-        for seg in result["segments"]:
-            segments.append({
-                "text": seg.get("text", "").strip(),
-                "start": seg.get("start", 0),
-                "end": seg.get("end", 0)
-            })
+    for sentence in result.sentences:
+        segments.append({
+            "text": sentence.text.strip(),
+            "start": sentence.start,
+            "end": sentence.end
+        })
 
-    duration = result.get("duration", get_audio_duration(audio_path))
+    duration = get_audio_duration(audio_path)
 
     return {
         "segments": segments,
-        "full_text": result.get("text", ""),
-        "duration": duration,
-        "raw_response": result
+        "full_text": result.text,
+        "duration": duration
     }
 
 
@@ -209,10 +145,9 @@ def diarize_with_pyannote(audio_path: Path) -> list[dict]:
     print("  Running diarization...")
     diarization = pipeline(audio_input)
 
-    # Extract segments (API returns .speaker_diarization attribute)
+    # Extract segments
     segments = []
     for turn, speaker in diarization.speaker_diarization:
-        # Speaker is like "SPEAKER_00", extract the number
         speaker_num = speaker.split('_')[-1] if '_' in str(speaker) else str(speaker)
         segments.append({
             "speaker": f"Speaker {speaker_num}",
@@ -269,11 +204,7 @@ def save_results(audio_name: str, transcription: str, duration: float,
                  timing: dict = None):
     """Save transcription results to a text file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = output_folder / f"voxtral_pyannote_{timestamp}_{audio_name}.txt"
-
-    voxtral_cost = (duration / 60) * VOXTRAL_PRICE_PER_MINUTE
-    pyannote_cost = 0  # Free (local)
-    total_cost = voxtral_cost
+    output_file = output_folder / f"parakeet_pyannote_{timestamp}_{audio_name}.txt"
 
     diarization_note = "Yes (Pyannote local)" if had_diarization else "No (Pyannote unavailable)"
 
@@ -282,24 +213,32 @@ def save_results(audio_name: str, transcription: str, duration: float,
     if timing:
         timing_info = f"""
 Processing Time:
-  - Voxtral API: {timing.get('voxtral', 0):.1f}s
+  - Parakeet Transcription: {timing.get('parakeet', 0):.1f}s
   - Pyannote Diarization: {timing.get('pyannote', 0):.1f}s
   - Total: {timing.get('total', 0):.1f}s
   - Speed: {duration / timing.get('total', 1):.1f}x realtime
 """
 
     content = f"""=== TRANSCRIPTION TEST RESULTS ===
-Method: Mistral Voxtral + Pyannote
+Method: Local Parakeet-MLX + Pyannote
 Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 Audio File: {audio_name}
 Audio Duration: {format_duration(duration)}
 
-Cost Breakdown:
-  - Voxtral: ${voxtral_cost:.4f} (@ ${VOXTRAL_PRICE_PER_MINUTE}/min)
-  - Pyannote: $0.00 (local/free)
-  - Total: ${total_cost:.4f}
+Cost: $0.00 (fully local - FREE!)
 {timing_info}
 Speaker Diarization: {diarization_note}
+
+Advantages:
+  - No file size limits
+  - No audio length limits
+  - No API costs
+  - Works offline
+  - Privacy (audio never leaves machine)
+
+Disadvantages:
+  - Slower than cloud APIs
+  - Requires local GPU/CPU resources
 
 === TRANSCRIPTION ===
 
@@ -315,12 +254,6 @@ def main():
     script_dir = Path(__file__).parent
     sample_folder = script_dir / "audio_sample"
     results_folder = script_dir / "test_results"
-
-    # Check API keys
-    if not os.getenv("MISTRAL_API_KEY"):
-        print("Error: MISTRAL_API_KEY not found in .env")
-        print("Add your Mistral API key to the .env file")
-        sys.exit(1)
 
     # Find audio file
     audio_file = find_audio_file(sample_folder)
@@ -338,18 +271,12 @@ def main():
         timing = {}
         total_start = time.time()
 
-        # Convert to MP3 if WAV or file too large (for API upload)
-        api_audio_file = audio_file
-        if audio_file.suffix.lower() == '.wav' or file_size > MAX_UPLOAD_SIZE_MB:
-            api_audio_file = convert_to_mp3(audio_file)
-            print()
-
-        # Step 1: Transcribe with Voxtral
-        print("Step 1: Transcribing with Voxtral...")
+        # Step 1: Transcribe with Parakeet
+        print("Step 1: Transcribing with Parakeet-MLX (local)...")
         step1_start = time.time()
-        voxtral_result = transcribe_with_voxtral(api_audio_file)
-        timing['voxtral'] = time.time() - step1_start
-        print(f"  Got {len(voxtral_result['segments'])} segments ({timing['voxtral']:.1f}s)")
+        parakeet_result = transcribe_with_parakeet(audio_file)
+        timing['parakeet'] = time.time() - step1_start
+        print(f"  Got {len(parakeet_result['segments'])} segments ({timing['parakeet']:.1f}s)")
 
         # Step 2: Diarize with Pyannote
         had_diarization = False
@@ -359,7 +286,7 @@ def main():
         if os.getenv("HUGGINGFACE_TOKEN"):
             try:
                 print()
-                print("Step 2: Speaker diarization with Pyannote...")
+                print("Step 2: Speaker diarization with Pyannote (local)...")
                 step2_start = time.time()
                 speaker_segments = diarize_with_pyannote(audio_file)
                 timing['pyannote'] = time.time() - step2_start
@@ -376,19 +303,18 @@ def main():
         print()
         print("Step 3: Aligning transcription with speakers...")
 
-        if voxtral_result['segments']:
+        if parakeet_result['segments']:
             final_text = align_transcription_with_speakers(
-                voxtral_result['segments'],
+                parakeet_result['segments'],
                 speaker_segments
             )
         else:
-            # Fallback to plain text
-            final_text = voxtral_result['full_text']
+            final_text = parakeet_result['full_text']
 
         timing['total'] = time.time() - total_start
 
         # Save results
-        duration = voxtral_result['duration']
+        duration = parakeet_result['duration']
         output_file = save_results(
             audio_file.stem,
             final_text,
@@ -401,7 +327,7 @@ def main():
         print()
         print(f"Audio duration: {format_duration(duration)}")
         print(f"Processing time: {timing['total']:.1f}s ({duration / timing['total']:.1f}x realtime)")
-        print(f"Cost estimate: ${(duration / 60) * VOXTRAL_PRICE_PER_MINUTE:.4f}")
+        print(f"Cost: $0.00 (FREE - local processing)")
         print()
         print(f"Results saved to: {output_file}")
         print()

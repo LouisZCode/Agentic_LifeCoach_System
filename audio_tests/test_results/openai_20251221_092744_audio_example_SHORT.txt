@@ -1,0 +1,133 @@
+=== TRANSCRIPTION TEST RESULTS ===
+Method: OpenAI gpt-4o-transcribe-diarize
+Date: 2025-12-21 09:27:44
+Audio File: audio_example_SHORT
+Audio Duration: 6:29
+Cost Estimate: $0.0389 (@ $0.006/min)
+
+Processing Time:
+  - OpenAI API: 281.9s
+  - Total: 281.9s
+  - Speed: 1.4x realtime
+
+Speaker Diarization: Yes (built-in)
+
+=== TRANSCRIPTION ===
+
+A: hear me I
+
+B: Wait, let me just turn on. Yep. Yes, I can hear you. Can you hear me?
+
+A: can't hear you can you hear me wait now now it's working okay yay it works for me
+
+B: But can you hear me or no?
+
+A: Yes.
+
+B: Through your headphones.
+
+A: Yes.
+
+B: Okay, okay. Then let's talk about something very important.
+
+A: Okay. What's your favorite moment of Better Call Saul series so far?
+
+B: Wow, that is a very crazy question. wow so much has happened why can why can I myself interesting
+
+A: I don't know that's you thing because I can I cannot hear myself
+
+B: okay um I don't know what has been my favorite moment I think when they found that family in the woods that was pretty funny
+
+A: Ah, yeah, that was funny too.
+
+B: How about you?
+
+A: Good question. Thing with the Mexican sari in Mexico and it's yellow. That's the best part.
+
+B: And relate?
+
+A: Remember home.
+
+B: You relate to situations and that.
+
+A: A Mexican colorful jealous. It's the best.
+
+B: Very much a classic one. Anytime I go to Mexico, I become a jellyfish.
+
+A: You're always yellow baby.
+
+B: I'm a comedian.
+
+A: that's also but
+
+B: That's also just a joke.
+
+A: yeah but what does it have to do ah maybe this one is better yeah that's why mine was so shitty because it was listening form from my Mac microphone not from my ear like my headphones microphone now it is and now it's making a much better job of doing my transcription and here
+
+B: Yes, I was gonna say that my transcription is generally not so good actually
+
+A: At your side like mine now, it's great yours also is really good to
+
+B: Okay, maybe let's talk a bit more and then I can have
+
+A: change your audio microphone and everything
+
+B: I have both on my speakers so it should be fine
+
+A: Now use your headset.
+
+B: When I say speaker I meant headset.
+
+A: Okay.
+
+B: But for example now instead of writing he changed. He
+
+A: Lights
+
+B: said okay
+
+A: AI, so it is hearing everything in context and then it makes like the final one.
+
+B: but like when you said headset he wrote cat set. Which is also cool, but why didn't he understand that because he understood me saying headset, but not you.
+
+A: Yeah, I guess it's my accent.
+
+B: But I mean in the context he should understand that it's not a cat saying.
+
+A: Well, he doesn't know what we are doing. Maybe it's like, yeah, cats it.
+
+B: Totally, totally. Well,
+
+A: I hope that it's good enough, right? For what you need for what they are saying.
+
+B: I mean, I have to try because some of them have really strong accents, so I'm not so sure how good it will translate also some of them like Sherry. For some reason, he speaks very, very low, like he's shy, he's a shy person.
+
+A: okay
+
+B: So he just says like three words and then they're kind of with a weird accent. Not a weird accent, just his accent is very strong. So it's hard for me to understand and I'm a human that kind of understands the context of what we're talking about now. I don't know how easy it will be for AI but we can try, why not?
+
+A: You can use both Cluly and this one and just check how both do it.
+
+B: Yeah, I think I will use both.
+
+A: Because if Cluly is unlimited for 20, maybe it's much better than this, but this one is like good enough for free, I guess.
+
+B: Yeah, yeah. I mean, it is translating.
+
+A: that will say 95 should be fine that's
+
+B: yeah i think also then gtp can kind of uh understand the context even if the transcription is kind of weird but
+
+A: what's what i'm gonna say like i can also just put in the prompt like hey here is the transcription this is a transcription so just be aware that it's not perfect so please maintain blah blah blah so they should know
+
+B: that's what i was thinking as well to just put it into the the prompt and then we can also have a little bit of imagination and figure out what we what we then
+
+A: Huh? Tomorrow you try both and we can see both how they work. That is going to be better if I have both examples.
+
+B: okay nice then I I can give you both examples and then you can maybe use Claude to just say which one is more accurate
+
+A: Yep, exactly. Makes sense. Safety is one then baby.
+
+B: Okay, besitos. Te amo.
+
+A: Bye, besitos.

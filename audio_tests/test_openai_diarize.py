@@ -10,6 +10,7 @@ Usage:
 
 import os
 import sys
+import time
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -98,8 +99,8 @@ def transcribe_with_openai_diarize(audio_path: Path) -> dict:
 
 def transcribe_with_diarization(audio_path: Path) -> dict:
     """
-    Transcribe audio using OpenAI's diarization endpoint.
-    Uses the newer approach with speaker identification.
+    Transcribe audio using OpenAI's gpt-4o-transcribe-diarize model.
+    Returns transcription with speaker labels.
     """
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -107,35 +108,55 @@ def transcribe_with_diarization(audio_path: Path) -> dict:
     duration = get_audio_duration(audio_path)
 
     with open(audio_path, "rb") as audio_file:
-        # Try the diarization model
         try:
+            # Use gpt-4o-transcribe-diarize with correct parameters
             response = client.audio.transcriptions.create(
-                model="gpt-4o-transcribe",
+                model="gpt-4o-transcribe-diarize",
                 file=audio_file,
-                response_format="verbose_json",
-                timestamp_granularities=["segment"]
+                response_format="diarized_json",  # Required for speaker labels
+                chunking_strategy="auto"  # Required for audio >30 seconds
             )
 
-            # Format output with segments
+            # Parse diarized_json response
+            # Response has .text and .segments with speaker info
             formatted_lines = []
+
             if hasattr(response, 'segments') and response.segments:
+                current_speaker = None
+                current_text = []
+
                 for segment in response.segments:
-                    start = format_duration(segment.get('start', 0))
-                    text = segment.get('text', '').strip()
-                    formatted_lines.append(f"[{start}] {text}")
+                    # Segments are objects, not dicts - use getattr
+                    speaker = getattr(segment, 'speaker', 'UNKNOWN')
+                    text = getattr(segment, 'text', '').strip()
+
+                    if speaker == current_speaker:
+                        current_text.append(text)
+                    else:
+                        if current_speaker is not None and current_text:
+                            formatted_lines.append(f"{current_speaker}: {' '.join(current_text)}")
+                        current_speaker = speaker
+                        current_text = [text]
+
+                # Don't forget last speaker
+                if current_speaker is not None and current_text:
+                    formatted_lines.append(f"{current_speaker}: {' '.join(current_text)}")
+
                 formatted_text = "\n\n".join(formatted_lines)
             else:
-                formatted_text = response.text
+                # Fallback to plain text if no segments
+                formatted_text = response.text if hasattr(response, 'text') else str(response)
 
             return {
                 "text": formatted_text,
                 "raw_response": response,
-                "duration": duration or getattr(response, 'duration', 0)
+                "duration": duration,
+                "had_diarization": bool(hasattr(response, 'segments') and response.segments)
             }
 
         except Exception as e:
             # Fallback to basic transcription
-            print(f"Note: Using basic transcription. Error: {e}")
+            print(f"Note: Diarization failed, using whisper-1. Error: {e}")
             response = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
@@ -144,28 +165,41 @@ def transcribe_with_diarization(audio_path: Path) -> dict:
             return {
                 "text": response.text,
                 "raw_response": response,
-                "duration": duration or getattr(response, 'duration', 0)
+                "duration": duration or getattr(response, 'duration', 0),
+                "had_diarization": False
             }
 
 
-def save_results(audio_name: str, result: dict, output_folder: Path):
+def save_results(audio_name: str, result: dict, output_folder: Path,
+                 timing: dict = None):
     """Save transcription results to a text file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = output_folder / f"openai_{timestamp}_{audio_name}.txt"
 
     duration = result.get("duration", 0)
     cost_estimate = (duration / 60) * PRICE_PER_MINUTE
+    had_diarization = result.get("had_diarization", False)
+
+    # Format timing info
+    timing_info = ""
+    if timing:
+        timing_info = f"""
+Processing Time:
+  - OpenAI API: {timing.get('openai', 0):.1f}s
+  - Total: {timing.get('total', 0):.1f}s
+  - Speed: {duration / timing.get('total', 1):.1f}x realtime
+"""
+
+    diarization_note = "Yes (built-in)" if had_diarization else "No (fallback to Whisper)"
 
     content = f"""=== TRANSCRIPTION TEST RESULTS ===
-Method: OpenAI gpt-4o-transcribe
+Method: OpenAI gpt-4o-transcribe-diarize
 Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 Audio File: {audio_name}
-Duration: {format_duration(duration)}
+Audio Duration: {format_duration(duration)}
 Cost Estimate: ${cost_estimate:.4f} (@ ${PRICE_PER_MINUTE}/min)
-
-Note: OpenAI's API transcription model. For speaker diarization,
-the gpt-4o-transcribe-diarize model may need to be used via a
-different endpoint or the response parsed differently.
+{timing_info}
+Speaker Diarization: {diarization_note}
 
 === TRANSCRIPTION ===
 
@@ -199,14 +233,24 @@ def main():
     print()
 
     try:
+        timing = {}
+        total_start = time.time()
+
         # Transcribe
+        print("Sending to OpenAI API...")
+        api_start = time.time()
         result = transcribe_with_diarization(audio_file)
+        timing['openai'] = time.time() - api_start
+        timing['total'] = time.time() - total_start
 
         # Save results
-        output_file = save_results(audio_file.stem, result, results_folder)
+        output_file = save_results(audio_file.stem, result, results_folder, timing)
 
-        print(f"Duration: {format_duration(result['duration'])}")
-        print(f"Cost estimate: ${(result['duration'] / 60) * PRICE_PER_MINUTE:.4f}")
+        duration = result['duration']
+        print()
+        print(f"Audio duration: {format_duration(duration)}")
+        print(f"Processing time: {timing['total']:.1f}s ({duration / timing['total']:.1f}x realtime)")
+        print(f"Cost estimate: ${(duration / 60) * PRICE_PER_MINUTE:.4f}")
         print()
         print(f"Results saved to: {output_file}")
         print()
@@ -215,6 +259,8 @@ def main():
 
     except Exception as e:
         print(f"Error during transcription: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
