@@ -13,6 +13,10 @@ from .transcription import (
     is_diarization_model_cached,
     transcribe_with_diarization,
 )
+from .transcription_deepgram import (
+    is_deepgram_available,
+    transcribe_with_deepgram,
+)
 
 
 print("Function module loaded...")

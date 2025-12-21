@@ -28,6 +28,8 @@ from functions import (
     is_diarization_available,
     is_diarization_model_cached,
     transcribe_with_diarization,
+    is_deepgram_available,
+    transcribe_with_deepgram,
 )
 
 # Import audio capture module
@@ -767,27 +769,34 @@ with tab1:
 
         st.divider()
 
-        # Speaker diarization option
-        diarization_available = is_diarization_available()
+        # Transcription method selector
+        transcription_options = ["Locally - Slow, Free"]
+        if is_deepgram_available():
+            transcription_options.append("Deepgram - Fast, $0.26/hr")
 
-        diarization_col1, diarization_col2 = st.columns([1, 3])
+        transcription_method = st.selectbox(
+            "Transcription Method",
+            options=transcription_options,
+            key="transcription_method",
+            help="Choose how to transcribe the audio"
+        )
 
-        with diarization_col1:
-            enable_diarization = st.checkbox(
-                "Identify Speakers",
-                value=False,
-                disabled=not diarization_available,
-                key="enable_diarization",
-                help="Use Pyannote to identify different speakers in the recording"
-            )
-
-        with diarization_col2:
+        # Show info based on selected method
+        if transcription_method == "Locally - Slow, Free":
+            # Speaker diarization status (always enabled for local)
+            diarization_available = is_diarization_available()
             if not diarization_available:
-                st.caption("⚠️ Speaker identification unavailable. Set `HUGGINGFACE_TOKEN` in .env file and install `pyannote.audio`.")
-            elif enable_diarization and not is_diarization_model_cached():
-                st.caption("📥 First use will download the diarization model (~200MB)")
-            elif enable_diarization:
+                st.caption("⚠️ Speaker identification unavailable. Set `HUGGINGFACE_TOKEN` in .env and install `pyannote.audio`.")
+            elif not is_diarization_model_cached():
+                st.caption("📥 First use will download the speaker identification model (~200MB)")
+            else:
                 st.caption("✓ Speaker identification enabled")
+        else:
+            st.caption("✓ Fast cloud transcription with built-in speaker identification")
+
+        # Tip if Deepgram not configured
+        if not is_deepgram_available():
+            st.caption("💡 Add `DEEPGRAM_API_KEY` to .env for faster cloud transcription")
 
         # Audio file uploader
         audio_file = st.file_uploader(
@@ -816,10 +825,6 @@ with tab1:
             if audio_file.size == 0:
                 st.error("The uploaded file appears to be empty.")
             else:
-                # Check if models need to be downloaded
-                model_cached = is_model_cached()
-                diarization_model_cached = is_diarization_model_cached() if enable_diarization else True
-
                 try:
                     # Create session folder (returns sanitized client name)
                     session_path, session_folder, safe_client_name = create_session_folder_for_transcription(
@@ -831,39 +836,40 @@ with tab1:
                     # Save audio file
                     audio_path = save_audio_file(session_path, audio_file)
 
-                    # Show appropriate message based on model cache status
-                    if not model_cached:
-                        st.info("📥 First time setup: Downloading transcription model (~600MB). This only happens once...")
+                    # Transcribe based on selected method
+                    if transcription_method.startswith("Deepgram"):
+                        # Deepgram cloud transcription (fast, with built-in diarization)
+                        with st.spinner("☁️ Transcribing with Deepgram..."):
+                            transcription_text, diarization_used = transcribe_with_deepgram(audio_path)
+                        st.success("✓ Transcription complete (Deepgram)")
 
-                    if enable_diarization and not diarization_model_cached:
-                        st.info("📥 Downloading speaker diarization model (~200MB). This only happens once...")
-
-                    # Determine which transcription method to use
-                    if enable_diarization:
-                        # Use diarization workflow
-                        with st.spinner("🎙️ Transcribing and identifying speakers..."):
-                            transcription_text, diarization_used = transcribe_with_diarization(audio_path)
-
-                        if diarization_used:
-                            st.success("✓ Speaker identification applied")
-                        else:
-                            st.warning("Speaker identification failed, using plain transcription")
                     else:
-                        # Standard transcription without diarization
+                        # Local transcription with Parakeet + Pyannote
+                        model_cached = is_model_cached()
+                        diarization_available = is_diarization_available()
+                        diarization_model_cached = is_diarization_model_cached() if diarization_available else True
+
+                        # Show download messages if needed
                         if not model_cached:
-                            with st.spinner("📥 Downloading model..."):
-                                transcription_text = transcribe_audio(audio_path)
+                            st.info("📥 First time setup: Downloading transcription model (~600MB). This only happens once...")
+
+                        if diarization_available and not diarization_model_cached:
+                            st.info("📥 Downloading speaker diarization model (~200MB). This only happens once...")
+
+                        # Use diarization if available (always for coaching sessions)
+                        if diarization_available:
+                            with st.spinner("🎙️ Transcribing and identifying speakers..."):
+                                transcription_text, diarization_used = transcribe_with_diarization(audio_path)
+
+                            if diarization_used:
+                                st.success("✓ Speaker identification applied")
+                            else:
+                                st.warning("Speaker identification failed, using plain transcription")
                         else:
-                            # Model is cached - use progress bar for transcription
-                            st.write("🎙️ Transcribing audio...")
-                            progress_bar = st.progress(0, text="Starting transcription...")
-
-                            def update_progress(progress: float):
-                                percent = int(progress * 100)
-                                progress_bar.progress(progress, text=f"Transcribing... {percent}%")
-
-                            transcription_text = transcribe_audio(audio_path, progress_callback=update_progress)
-                            progress_bar.progress(1.0, text="Transcription complete!")
+                            # Fallback: plain transcription without diarization
+                            with st.spinner("🎙️ Transcribing audio..."):
+                                transcription_text = transcribe_audio(audio_path)
+                            st.success("✓ Transcription complete")
 
                     # Save transcription
                     save_transcription(session_path, transcription_text)
