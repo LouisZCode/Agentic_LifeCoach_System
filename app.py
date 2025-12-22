@@ -664,32 +664,34 @@ with tab1:
 
                         st.warning(f"🔴 Live Session... {minutes:02d}:{seconds:02d}")
 
-                        # Audio level meters
+                        # Audio LED-style indicators
                         mic_level, system_level = capturer.get_audio_levels()
                         channel_count = capturer.get_channel_count()
 
-                        level_col1, level_col2 = st.columns(2)
-                        with level_col1:
-                            # Scale to 0-100 for progress bar (RMS is typically 0-0.3 for normal speech)
-                            mic_pct = min(int(mic_level * 300), 100)
-                            if channel_count >= 3:
-                                st.caption("🎤 Microphone")
-                                st.progress(mic_pct)
-                            else:
-                                st.caption("🎤 Input")
-                                st.progress(mic_pct if channel_count == 1 else 0)
+                        # Scale levels (RMS typically 0-0.3 for speech)
+                        mic_scaled = min(mic_level * 5, 1.0)
+                        system_scaled = min(system_level * 5, 1.0)
 
-                        with level_col2:
-                            system_pct = min(int(system_level * 300), 100)
-                            if channel_count >= 3:
-                                st.caption("🔊 System Audio")
-                                st.progress(system_pct)
-                            elif channel_count == 2:
-                                st.caption("🔊 Audio")
-                                st.progress(system_pct)
-                            else:
-                                st.caption("🔊 System Audio")
-                                st.progress(0)
+                        def led_dots(level):
+                            """Generate LED-style dots based on audio level"""
+                            dots = ["⚫", "⚫", "⚫", "⚫", "⚫"]
+                            active_count = int(level * 5)
+                            for i in range(active_count):
+                                if i < 2:
+                                    dots[i] = "🟢"
+                                elif i < 4:
+                                    dots[i] = "🟡"
+                                else:
+                                    dots[i] = "🔴"
+                            return " ".join(dots)
+
+                        # Display LED indicators based on channel count
+                        if channel_count >= 3:
+                            st.markdown(f"🎤 Mic: {led_dots(mic_scaled)}  &nbsp;&nbsp;&nbsp;  🔊 System: {led_dots(system_scaled)}")
+                        elif channel_count == 2:
+                            st.markdown(f"🎤 Input: {led_dots(mic_scaled)}  &nbsp;&nbsp;&nbsp;  🔊 Audio: {led_dots(system_scaled)}")
+                        else:
+                            st.markdown(f"🎤 Input: {led_dots(mic_scaled)}")
 
                         if st.button("⏹️ End Session", type="primary", key="stop_recording"):
                             # Stop audio capture
