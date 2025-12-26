@@ -601,3 +601,43 @@ def save_session_draft(path: str, content : str) -> str:
     log_tool_call("save_next_session_draft", {"path": path}, output=str(file_path), status="saved")
 
     return f"new next session draft created in {file_path}"
+
+@tool(
+    "save_initial_persona",
+    parse_docstring=True,
+    description="creates a new client folder and saves the initial client persona document in the Evolution folder"
+)
+def save_initial_persona(client_name: str, content: str) -> str:
+    """
+    Description:
+        Creates a new client folder in Undefined, creates the Evolution subfolder,
+        and saves the initial client persona document with today's date.
+
+    Args:
+        client_name (str): The sanitized client name (e.g., "Pedro_Perez")
+        content (str): The formatted persona content to save
+
+    Returns:
+        Confirmation message with the file path created
+
+    Raises:
+        Error if there was an issue while saving.
+    """
+    from datetime import datetime
+
+    log_tool_call("save_initial_persona", {"client_name": client_name, "content_length": len(content)})
+
+    # Create client folder and Evolution subfolder
+    client_path = Path(f"LifeCoach_Data/Undefined/{client_name}")
+    evolution_path = client_path / "Evolution"
+    evolution_path.mkdir(parents=True, exist_ok=True)
+
+    # Generate filename with today's date
+    date_str = datetime.now().strftime("%d-%m-%Y")
+    filename = f"{date_str}_initial_client_persona.txt"
+    file_path = evolution_path / filename
+
+    file_path.write_text(content, encoding="utf-8")
+    log_tool_call("save_initial_persona", {"client_name": client_name}, output=str(file_path), status="saved")
+
+    return f"Initial client persona saved at {file_path}"
