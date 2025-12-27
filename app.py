@@ -10,6 +10,8 @@ A multi-tab interface for managing coaching clients and sessions.
 import streamlit as st
 import os
 import re
+import shutil
+import warnings
 from datetime import datetime
 from io import BytesIO
 
@@ -244,28 +246,30 @@ def read_uploaded_file(uploaded_file) -> str:
             3: [(90, 160, 'Career / purpose'), (240, 310, 'Money'), (390, 460, 'Personal growth'), (540, 610, 'Fun & leisure'), (690, 760, 'Spirituality / connection')]
         }
 
-        with pdfplumber.open(BytesIO(file_bytes)) as pdf:
-            # Extract text from all pages
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(page_text)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*FontBBox.*")
+            with pdfplumber.open(BytesIO(file_bytes)) as pdf:
+                # Extract text from all pages
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
 
-            # Try to extract Life Balance scores (for Discovery Forms)
-            for page_num, areas in LIFE_AREAS.items():
-                if page_num <= len(pdf.pages):
-                    page = pdf.pages[page_num - 1]
-                    # Find orange (selected) circles - Google Forms selection color
-                    orange = [c for c in page.curves if c.get('non_stroking_color') == (0.8784, 0.2706, 0.0)]
-                    for y_min, y_max, area_name in areas:
-                        for c in orange:
-                            if y_min <= c['top'] <= y_max:
-                                x = round(c['x0'])
-                                for i, scale_x in enumerate(SCALE_X, 1):
-                                    if abs(x - scale_x) < 15:
-                                        life_balance_scores[area_name] = i
-                                        break
-                                break
+                # Try to extract Life Balance scores (for Discovery Forms)
+                for page_num, areas in LIFE_AREAS.items():
+                    if page_num <= len(pdf.pages):
+                        page = pdf.pages[page_num - 1]
+                        # Find orange (selected) circles - Google Forms selection color
+                        orange = [c for c in page.curves if c.get('non_stroking_color') == (0.8784, 0.2706, 0.0)]
+                        for y_min, y_max, area_name in areas:
+                            for c in orange:
+                                if y_min <= c['top'] <= y_max:
+                                    x = round(c['x0'])
+                                    for i, scale_x in enumerate(SCALE_X, 1):
+                                        if abs(x - scale_x) < 15:
+                                            life_balance_scores[area_name] = i
+                                            break
+                                    break
 
         full_text = '\n'.join(text_parts)
 
@@ -311,6 +315,27 @@ def get_undefined_clients() -> list:
         return []
     return [d for d in os.listdir(UNDEFINED_PATH)
             if os.path.isdir(os.path.join(UNDEFINED_PATH, d))]
+
+
+def move_client_folder(client_name: str, destination: str) -> tuple[bool, str]:
+    """
+    Move client folder from Undefined to Active or Inactive.
+    Returns (success, message)
+    """
+    source = os.path.join(UNDEFINED_PATH, client_name)
+    if destination == "Active":
+        dest = os.path.join(ACTIVE_PATH, client_name)
+    else:
+        dest = os.path.join(INACTIVE_PATH, client_name)
+
+    if not os.path.exists(source):
+        return False, f"Client folder not found: {client_name}"
+
+    if os.path.exists(dest):
+        return False, f"Client already exists in {destination}"
+
+    shutil.move(source, dest)
+    return True, f"Moved {client_name.replace('_', ' ')} to {destination}"
 
 
 def get_client_sessions(client_name: str) -> list:
@@ -545,6 +570,8 @@ if "discovery_form_content" not in st.session_state:
     st.session_state.discovery_form_content = None
 if "persona_generated" not in st.session_state:
     st.session_state.persona_generated = False
+if "tab2_workflow_mode" not in st.session_state:
+    st.session_state.tab2_workflow_mode = "discovery"  # "discovery" or "client_flow"
 
 # Tab 3: Active Clients
 if "messages_active" not in st.session_state:
@@ -1094,45 +1121,64 @@ with tab1:
 # ============================================================================
 
 with tab2:
-    st.header("New Client Intake")
+    st.header("Undefined Clients")
 
-    # Step 1: Upload Discovery Form
-    st.subheader("Step 1: Upload Discovery Form")
-    uploaded_pdf = st.file_uploader(
-        "Upload the client's Discovery Form (PDF)",
-        type=['pdf'],
-        key="discovery_form_upload"
-    )
-
-    if uploaded_pdf:
-        # Parse PDF and store content
-        file_content = read_uploaded_file(uploaded_pdf)
-        if file_content:
-            st.session_state.discovery_form_content = file_content
-            st.success(f"Discovery Form '{uploaded_pdf.name}' loaded successfully!")
-
-            # Preview in expander
-            with st.expander("Preview Discovery Form Content", expanded=False):
-                st.text(file_content[:2000] + "..." if len(file_content) > 2000 else file_content)
+    # Workflow toggle buttons
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        if st.button(
+            "New Discovery Form",
+            type="primary" if st.session_state.tab2_workflow_mode == "discovery" else "secondary",
+            key="tab2_discovery_btn"
+        ):
+            st.session_state.tab2_workflow_mode = "discovery"
+            st.rerun()
+    with col2:
+        if st.button(
+            "Client Flow",
+            type="primary" if st.session_state.tab2_workflow_mode == "client_flow" else "secondary",
+            key="tab2_client_flow_btn"
+        ):
+            st.session_state.tab2_workflow_mode = "client_flow"
+            st.rerun()
 
     st.divider()
 
-    # Step 2: Generate Persona
-    st.subheader("Step 2: Generate Client Persona")
+    # ==================== DISCOVERY FORM WORKFLOW ====================
+    if st.session_state.tab2_workflow_mode == "discovery":
 
-    # Optional notes field
-    additional_notes = st.text_area(
-        "Additional Notes (optional)",
-        placeholder="Add any notes, corrections, or context for this client...",
-        key="undefined_additional_notes",
-        height=100
-    )
+        uploaded_pdf = st.file_uploader(
+            "Upload the client's Discovery Form (PDF)",
+            type=['pdf'],
+            key="discovery_form_upload"
+        )
 
-    generate_disabled = not st.session_state.discovery_form_content
-    if st.button("Generate Persona", type="primary", disabled=generate_disabled, key="generate_persona_btn"):
-        # Build prompt - agent extracts name from PDF
-        notes_section = f"\n\nAdditional Notes from Maria:\n{additional_notes}" if additional_notes else ""
-        prompt = f"""Based on the following Discovery Form, create an initial client persona.
+        if uploaded_pdf:
+            # Parse PDF and store content
+            file_content = read_uploaded_file(uploaded_pdf)
+            if file_content:
+                st.session_state.discovery_form_content = file_content
+                st.success(f"Discovery Form '{uploaded_pdf.name}' loaded successfully!")
+
+                # Preview in expander
+                with st.expander("Preview Discovery Form Content", expanded=False):
+                    st.text(file_content[:2000] + "..." if len(file_content) > 2000 else file_content)
+
+        st.divider()
+
+        # Optional notes field
+        additional_notes = st.text_area(
+            "Additional Notes (optional)",
+            placeholder="Add any notes, corrections, or context for this client...",
+            key="undefined_additional_notes",
+            height=100
+        )
+
+        generate_disabled = not st.session_state.discovery_form_content
+        if st.button("Generate Persona", type="primary", disabled=generate_disabled, key="generate_persona_btn"):
+            # Build prompt - agent extracts name from PDF
+            notes_section = f"\n\nAdditional Notes from Maria:\n{additional_notes}" if additional_notes else ""
+            prompt = f"""Based on the following Discovery Form, create an initial client persona.
 
 IMPORTANT: Extract the client's Full Name from Section 1 of the form and use it for the folder name (replace spaces with underscores, e.g., "Ian Sutton" becomes "Ian_Sutton").
 
@@ -1141,79 +1187,126 @@ Discovery Form Content:
 
 Please extract all relevant information and save the initial client persona using the save_initial_persona tool."""
 
-        st.session_state.messages_undefined.append({
-            "role": "user",
-            "content": prompt
-        })
-
-        with st.spinner("Generating client persona..."):
-            response = invoke_agent(
-                undefined_clients_agent,
-                st.session_state.messages_undefined
-            )
             st.session_state.messages_undefined.append({
-                "role": "assistant",
-                "content": response
+                "role": "user",
+                "content": prompt
             })
 
-            # Check if persona was saved and extract client name from response
-            if "saved" in response.lower():
-                st.session_state.persona_generated = True
-                # Extract client name from response (format: "saved at .../Undefined/Client_Name/Evolution/...")
-                match = re.search(r'Undefined/([^/]+)/Evolution', response)
-                if match:
-                    st.session_state.current_undefined_client = match.group(1)
+            with st.spinner("Generating client persona..."):
+                response = invoke_agent(
+                    undefined_clients_agent,
+                    st.session_state.messages_undefined
+                )
+                st.session_state.messages_undefined.append({
+                    "role": "assistant",
+                    "content": response
+                })
 
-        st.rerun()
+                # Check if persona was saved and extract client name from response
+                if "saved" in response.lower():
+                    st.session_state.persona_generated = True
+                    # Extract client name from response (format: "saved at .../Undefined/Client_Name/Evolution/...")
+                    match = re.search(r'Undefined/([^/]+)/Evolution', response)
+                    if match:
+                        st.session_state.current_undefined_client = match.group(1)
 
-    if generate_disabled:
-        st.caption("Upload a Discovery Form to enable generation")
+            st.rerun()
 
-    st.divider()
+        if generate_disabled:
+            st.caption("Upload a Discovery Form to enable generation")
 
-    # Step 3: Actions
-    if st.session_state.persona_generated and st.session_state.current_undefined_client:
-        st.subheader("Step 3: Persona Created")
-        st.success(f"Initial persona created for {st.session_state.current_undefined_client.replace('_', ' ')}")
+        st.divider()
 
-        # Try to load the persona file for download
-        persona_path = os.path.join(
-            UNDEFINED_PATH,
-            st.session_state.current_undefined_client,
-            "Evolution"
-        )
-        if os.path.exists(persona_path):
-            persona_files = [f for f in os.listdir(persona_path) if f.endswith("_initial_client_persona.txt")]
-            if persona_files:
-                latest_persona = sorted(persona_files)[-1]
-                with open(os.path.join(persona_path, latest_persona), 'r', encoding='utf-8') as f:
-                    persona_content = f.read()
+        # Step 3: Actions
+        if st.session_state.persona_generated and st.session_state.current_undefined_client:
+            st.subheader("Step 3: Persona Created")
+            st.success(f"Initial persona created for {st.session_state.current_undefined_client.replace('_', ' ')}")
 
+            # Try to load the persona file for download
+            persona_path = os.path.join(
+                UNDEFINED_PATH,
+                st.session_state.current_undefined_client,
+                "Evolution"
+            )
+            if os.path.exists(persona_path):
+                persona_files = [f for f in os.listdir(persona_path) if f.endswith("_initial_client_persona.txt")]
+                if persona_files:
+                    latest_persona = sorted(persona_files)[-1]
+                    with open(os.path.join(persona_path, latest_persona), 'r', encoding='utf-8') as f:
+                        persona_content = f.read()
+
+                    # Preview generated persona
+                    with st.expander("Preview Generated Persona", expanded=True):
+                        st.text(persona_content)
+
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        st.download_button(
+                            label="Download Persona",
+                            data=persona_content,
+                            file_name=latest_persona,
+                            mime="text/plain"
+                        )
+                    with col_b:
+                        if st.button("Start New Client", key="clear_form_btn"):
+                            st.session_state.discovery_form_content = None
+                            st.session_state.current_undefined_client = ""
+                            st.session_state.persona_generated = False
+                            st.session_state.messages_undefined = []
+                            st.rerun()
+
+    # ==================== CLIENT FLOW WORKFLOW ====================
+    elif st.session_state.tab2_workflow_mode == "client_flow":
+
+        st.subheader("Manage Undefined Clients")
+
+        undefined_clients = get_undefined_clients()
+
+        if not undefined_clients:
+            st.info("No undefined clients found. Use 'New Discovery Form' to add clients.")
+        else:
+            selected_client = st.selectbox(
+                "Select Client",
+                options=undefined_clients,
+                format_func=lambda x: x.replace('_', ' '),
+                key="client_flow_select"
+            )
+
+            if selected_client:
+                st.divider()
+
+                # Show client persona preview if available
+                persona_path = os.path.join(UNDEFINED_PATH, selected_client, "Evolution")
+                if os.path.exists(persona_path):
+                    persona_files = [f for f in os.listdir(persona_path) if f.endswith("_initial_client_persona.txt")]
+                    if persona_files:
+                        latest_persona = sorted(persona_files)[-1]
+                        with open(os.path.join(persona_path, latest_persona), 'r', encoding='utf-8') as f:
+                            persona_content = f.read()
+                        with st.expander("View Client Persona", expanded=False):
+                            st.text(persona_content)
+
+                st.divider()
+
+                # Move buttons
+                st.write("**Move client to:**")
                 col_a, col_b = st.columns(2)
                 with col_a:
-                    st.download_button(
-                        label="Download Persona",
-                        data=persona_content,
-                        file_name=latest_persona,
-                        mime="text/plain"
-                    )
+                    if st.button("Move to Active", type="primary", key="move_to_active_btn"):
+                        success, message = move_client_folder(selected_client, "Active")
+                        if success:
+                            st.success(message)
+                            st.rerun()
+                        else:
+                            st.error(message)
                 with col_b:
-                    if st.button("Start New Client", key="clear_form_btn"):
-                        st.session_state.discovery_form_content = None
-                        st.session_state.current_undefined_client = ""
-                        st.session_state.persona_generated = False
-                        st.session_state.messages_undefined = []
-                        st.rerun()
-
-    # Collapsible: Agent conversation history
-    with st.expander("Agent Conversation History", expanded=False):
-        if st.session_state.messages_undefined:
-            for message in st.session_state.messages_undefined:
-                with st.chat_message(message["role"]):
-                    display_text = strip_context_tags(message["content"]) if message["role"] == "user" else message["content"]
-                    st.markdown(display_text)
-        else:
-            st.caption("No conversation yet")
+                    if st.button("Move to Inactive", key="move_to_inactive_btn"):
+                        success, message = move_client_folder(selected_client, "Inactive")
+                        if success:
+                            st.success(message)
+                            st.rerun()
+                        else:
+                            st.error(message)
 
 
 # ============================================================================
