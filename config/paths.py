@@ -1,3 +1,6 @@
+
+from pathlib import Path
+
 #Deprecated:
 TEST_FOLDER_ID = "1_g4Zxw_M4wQvYrJY8C06mj5EdYKW_7lw"
 FOLDER_ID="1f04r-mTCqEq0hYqTR5YK8ue0f7NRBT1e"
@@ -10,3 +13,6 @@ UNDEFINED_CLIENTS_PATH="LifeCoach_Data/Undefined"
 
 # Parakeet-MLX model for audio transcription
 MODEL_PATH="model/nvidia_parakeet-v3_494MB"
+
+#Vector store path:
+VECTOR_STORE_PATH = Path("data/vector_store/Quarterly_Reports_DB")
