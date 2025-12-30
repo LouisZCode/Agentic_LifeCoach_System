@@ -20,8 +20,6 @@ from .transcription_deepgram import (
     convert_audio_to_deepgram_format,
 )
 from .document_orchestrator import create_document, detect_document_type
-
-from .vector_store_creator import vector_store_creation
 from .retriever_tool import retriever_tool
 
 
